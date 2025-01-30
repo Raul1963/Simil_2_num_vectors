@@ -2,7 +2,10 @@ import os.path
 import time
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import \
+    confusion_matrix, \
+    ConfusionMatrixDisplay, \
+    accuracy_score
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 import matplotlib.pyplot as plt
@@ -112,7 +115,7 @@ def trains(traindata):
     distances = calcDist(traindata)
     x = []
     y = []
-    trueLabel = [1 if traindata.iloc[i][ 'authorCode'] == 5 else 0 for i in range(len(traindata))]
+    trueLabel = [1 if traindata.iloc[i]['authorCode'] == 5 else 0 for i in range(len(traindata))]
 
     for i in np.arange( 0.0, 0.1, 0.0001):
         limit=i
@@ -125,7 +128,7 @@ def trains(traindata):
         y.append(int(f"{accuracy*100:.0f}"))
         if(accuracy>bestAcc):
             bestAcc, newL=accuracy, i
-
+    print(bestAcc)
     plt.plot(x,y)
     plt.xlabel('Threshold')
     plt.ylabel('Accuracy (%)')
@@ -179,3 +182,93 @@ def confMatrix(train,test):
     #Here we output the accuracy of our function, by adding the true positives with the true negatives(coorect predictions) and by dividing them by all the elements form the confusion matrix(total predictions)
 
 confMatrix("ROST-P/Custom_train01.csv","ROST-P/custom_test01.csv")
+confMatrix("ROST-P/ROST-P-trainSet1.csv","ROST-P/ROST-P-testSet1.csv")
+
+
+# def calcThresholds(traindata):
+#     """
+#     Calculate a distance threshold for each class based on training data.
+#     """
+#     class_refs = traindata.groupby('authorCode').apply( lambda group: group.iloc[:,:-1].values)
+#     thresholds = {}
+#     for cls, refs in class_refs.items():
+#         distances = []
+#         for i in range(len(refs)):
+#             for j in range(len(refs)):
+#                 if i != j:  # Avoid self-comparison
+#                     distances.append(cityblock( refs[i],refs[j]))
+#         thresholds[cls] = np.mean(distances) + 1.7 * np.std(distances)  # Mean + margin
+#     return thresholds
+#
+#
+# def calcDistWithThresholds(data,thresholds):
+#     """
+#     Predict the class for each instance in the dataset based on distances and thresholds.
+#     """
+#     class_refs = data.groupby('authorCode').apply(lambda group: group.iloc[:,:-1].values)
+#     predictions = []
+#     for i in range(len(data)):
+#         test_instance = data.iloc[i,:-1].values
+#         min_distance = float('inf')
+#         best_class = None
+#         for cls, refs in class_refs.items():
+#             dist = [cityblock(test_instance,ref)for ref in refs]
+#             avg_distance = np.mean(dist)
+#             if avg_distance < thresholds[cls] and avg_distance < min_distance:
+#                 min_distance = avg_distance
+#                 best_class = cls
+#         predictions.append(best_class if best_class is not None else -1)  # -1 for unclassified
+#     return predictions
+#
+#
+# def trainsWithThresholds(traindata):
+#     """
+#     Calculate thresholds and evaluate accuracy on the training set.
+#     """
+#     thresholds = calcThresholds(traindata)
+#     true_labels = traindata['authorCode']
+#     predicted_labels = calcDistWithThresholds(traindata,thresholds)
+#
+#     # Evaluate accuracy
+#     accuracy = accuracy_score(true_labels,predicted_labels)
+#     print(f"Training Accuracy: {accuracy:.4f}")
+#     return thresholds
+#
+#
+# def confMatrixWithThresholds(train,test):
+#     """
+#     Outputs the confusion matrix and accuracy for multi-class classification using thresholds.
+#     """
+#     try:
+#         traindata = pd.read_csv(train)
+#         testdata = pd.read_csv(test)
+#     except:
+#         traindata = pd.read_excel(train)
+#         testdata = pd.read_excel(test)
+#
+#     # Ensure class labels are integers
+#     traindata['authorCode'] = traindata['authorCode'].astype(int)
+#     testdata['authorCode'] = testdata['authorCode'].astype(int)
+#
+#     # Train to get thresholds
+#     thresholds = trainsWithThresholds(traindata)
+#
+#     # Test phase
+#     true_labels = testdata['authorCode']
+#     predicted_labels = calcDistWithThresholds(testdata,thresholds)
+#
+#     # Confusion Matrix
+#     cm = confusion_matrix(y_true=true_labels,y_pred=predicted_labels)
+#     print("Confusion Matrix:\n",cm)
+#
+#     disp = ConfusionMatrixDisplay(confusion_matrix=cm,display_labels=np.unique(true_labels))
+#     disp.plot(cmap=plt.cm.Blues)
+#     plt.show()
+#
+#     # Accuracy
+#     accuracy = accuracy_score(true_labels, predicted_labels)
+#     print(f"Test Accuracy: {accuracy:.4f}")
+#
+#
+# # Run the multi-class confusion matrix
+# confMatrixWithThresholds("ROST-P/ROST-P-trainSet1.csv","ROST-P/ROST-P-testSet1.csv")

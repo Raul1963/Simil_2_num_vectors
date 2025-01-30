@@ -31,10 +31,13 @@ def svm(train,test):
         testdata = pd.read_excel(test)
 
     X_train = traindata.iloc[:,:-1]
-    y_train = traindata['authorCode'].apply(lambda x: 1 if x == 5 else 0)
+    y_train = traindata['authorCode']
 
     X_test = testdata.iloc[:,:-1]
-    y_test = testdata['authorCode'].apply(lambda x: 1 if x == 5 else 0)
+    y_test = testdata['authorCode']
+    y_train = y_train.apply(lambda x: 1 if x == 5 else 0)
+    y_test = y_test.apply(lambda x: 1 if x == 5 else 0)
+
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)  # Fit and transform on training data
     X_test_scaled = scaler.transform(X_test)        # Only transform on test data
@@ -42,34 +45,35 @@ def svm(train,test):
     besti=0
     bestc=0
     bestacc=0
-    for i in np.arange(0,0.1, 0.001):
-        for j in np.arange(0,1,0.01):
-            svm = SVC( kernel='sigmoid',gamma=i,coef0=j)
-            svm.fit( X_train_scaled,y_train)
-            y_pred = svm.predict( X_test_scaled)
-            accuracy = accuracy_score(y_test,y_pred)
-            if(accuracy>bestacc):
-                bestacc,besti,bestc=accuracy,i,j
-
-    print(f"The best accuracy of {bestacc} is for gamma {besti} and coef0 {bestc}")
+    # for i in np.arange(0.1,1, 0.01):
+    #     for j in np.arange(0,1,0.01):
+    #         svm = SVC( kernel='sigmoid',gamma=i,coef0=j)
+    #         svm.fit( X_train_scaled,y_train)
+    #         y_pred = svm.predict( X_test_scaled)
+    #         accuracy = accuracy_score(y_test,y_pred)
+    #         if(accuracy>bestacc):
+    #             bestacc,besti,bestc=accuracy,i,j
+    #
+    # print(f"The best accuracy of {bestacc} is for gamma {besti} and coef0 {bestc}")
     # Create and train the SVM classifier
-    svm = SVC(kernel='sigmoid',gamma=besti,coef0=bestc)
+    svm = SVC(kernel='sigmoid',gamma=0.12,coef0=0.0)
     svm.fit(X_train_scaled, y_train)
 
     # Make predictions
     y_pred = svm.predict(X_test_scaled)
+    print("Unique classes in predictions:",np.unique(y_pred))
 
     # Calculate accuracy
     accuracy = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {accuracy:.4f}")
 
     # Generate confusion matrix
-    cm = confusion_matrix(y_test, y_pred, labels=[0, 1])
+    cm = confusion_matrix(y_test, y_pred, labels=np.unique([y_test,y_pred]))
     print("Confusion Matrix:\n", cm)
 
     # Display confusion matrix
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["Not Similar", "Similar"])
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=np.unique([y_test,y_pred]))
     disp.plot()
     plt.show()
 
-svm("ROST-P/Custom_train01.csv","ROST-P/custom_test01.csv")
+svm("ROST-P/ROST-P-trainSet1.csv","ROST-P/ROST-P-testSet1.csv")

@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
@@ -68,13 +69,13 @@ def knn(train,test):
     accuracy = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {accuracy:.4f}")
 
-    cm = confusion_matrix(y_test, y_pred, labels=[0, 1])
+    cm = confusion_matrix(y_test, y_pred, labels=np.unique([y_test,y_pred]))
     print("Confusion Matrix:\n", cm)
 
 
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["Not Similar", "Similar"])
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=np.unique([y_test,y_pred]))
     disp.plot()
     plt.show()
 
-knn("ROST-P/Custom_train01.csv","ROST-P/custom_test01.csv")
-testK("ROST-P/Custom_train01.csv","ROST-P/custom_test01.csv")
+knn("ROST-P/ROST-P-trainSet1.csv","ROST-P/ROST-P-testSet1.csv")
+testK("ROST-P/ROST-P-trainSet1.csv","ROST-P/ROST-P-testSet1.csv")

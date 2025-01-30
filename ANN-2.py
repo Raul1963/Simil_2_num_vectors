@@ -21,8 +21,8 @@ X_test = test_data.iloc[:, :-1].values  # Same for test data
 y_test = test_data['authorCode'].values
 
 # Binary classification: If 'authorCode' == 5, label as 1; otherwise, 0
-y_train = np.where(y_train == 5, 1, 0)
-y_test = np.where(y_test == 5, 1, 0)
+# y_train = np.where(y_train == 5, 1, 0)
+# y_test = np.where(y_test == 5, 1, 0)
 
 # Feature scaling
 scaler = StandardScaler()
@@ -59,10 +59,10 @@ accuracy = accuracy_score(y_test, y_pred)
 print(f"Accuracy: {accuracy:.4f}")
 
 # Generate confusion matrix
-cm = confusion_matrix(y_test, y_pred)
+cm = confusion_matrix(y_test, y_pred,labels=np.unique([y_test,y_pred]))
 print("Confusion Matrix:\n", cm)
 
 # Plot confusion matrix
-disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["Not 5", "Is 5"])
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=np.unique([y_test,y_pred]))
 disp.plot()
 plt.show()

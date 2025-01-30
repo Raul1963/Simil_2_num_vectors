@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
 from keras import Sequential
-from sklearn.metrics import accuracy_score,confusion_matrix
+from sklearn.metrics import \
+    accuracy_score, \
+    confusion_matrix, \
+    classification_report
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import RandomizedSearchCV
 # from tensorflow.keras.models import Sequential
@@ -10,16 +13,16 @@ from scikeras.wrappers import KerasClassifier
 from scipy.stats import uniform
 
 # Function to create model, required for KerasClassifier
-def create_rnn_model(units=50, activation='tanh', optimizer='adam', dropout_rate=0.0):
+def create_rnn_model(units=50, activation='tanh', optimizer='adam', dropout_rate=0.0,num_classes=10):
     model = Sequential()
     model.add(SimpleRNN(units=units, activation=activation, input_shape=(1, X_train.shape[1])))
-    model.add(Dense(1, activation='sigmoid'))  # Binary classification
-    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+    model.add(Dense(num_classes, activation='softmax'))  # Binary classification
+    model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
 
 # Load the data (train and test)
-train_data = pd.read_csv('ROST-P/Custom_train01.csv')  # Use your file path
-test_data = pd.read_csv('ROST-P/Custom_test01.csv')   # Use your file path
+train_data = pd.read_csv('ROST-P/ROST-P-trainSet1.csv')  # Use your file path
+test_data = pd.read_csv('ROST-P/ROST-P-testSet1.csv')   # Use your file path
 
 # Split features (X) and labels (y)
 X_train = train_data.iloc[:, :-1].values  # All columns except the last one (features)
@@ -42,7 +45,8 @@ X_train_reshaped = np.reshape(X_train_scaled, (X_train_scaled.shape[0], 1, X_tra
 X_test_reshaped = np.reshape(X_test_scaled, (X_test_scaled.shape[0], 1, X_test_scaled.shape[1]))
 
 # Create a KerasClassifier for RandomizedSearchCV
-model = KerasClassifier(build_fn=create_rnn_model, verbose=0)
+num_classes = len(np.unique(y_train))
+model = KerasClassifier(build_fn=create_rnn_model, verbose=0,num_classes=num_classes)
 
 # Define the hyperparameter space
 param_dist = {
@@ -66,11 +70,20 @@ print("Best parameters found: ", random_search.best_params_)
 
 # Evaluate the best model on the test set
 best_model = random_search.best_estimator_
-y_pred = (best_model.predict(X_test_reshaped) > 0.5).astype(int)
+# y_pred = (best_model.predict(X_test_reshaped) > 0.5).astype(int)
+y_pred_proba = best_model.predict(X_test_reshaped)
+
+# If `y_pred_proba` is 1D (e.g., binary output), use argmax only if it's a 2D array:
+if y_pred_proba.ndim == 1:
+    y_pred = y_pred_proba  # Single dimension output if it’s a single-label prediction
+else:
+    # For multi-class output, apply argmax along axis 1 to get the class predictions
+    y_pred = np.argmax(y_pred_proba, axis=1)
 
 # Accuracy on the test set
 accuracy = accuracy_score(y_test, y_pred)
 print(f"Test Accuracy: {accuracy:.4f}")
+print("Classification Report:\n", classification_report(y_test, y_pred))
 
 # Confusion matrix
 cm = confusion_matrix(y_test, y_pred)
